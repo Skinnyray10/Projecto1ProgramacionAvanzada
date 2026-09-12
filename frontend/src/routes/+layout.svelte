@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>HMDP · Gastos e ingresos</title>
+	<title>Ryan Rolando Garcia Galvan</title>
 </svelte:head>
 
 <header class="fixed inset-x-0 top-0 z-20 flex items-center justify-between bg-[#f3efe6]/85 px-5 py-4 backdrop-blur-md dark:bg-[#12081c]/85 md:px-10">
