@@ -1,43 +1,97 @@
+// @ts-nocheck
 import * as THREE from 'three';
 
-/** @param {HTMLCanvasElement} canvas */
-export function createWorld(canvas) {
-	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-	renderer.setClearColor(0xf3efe6, 1);
+function dustTexture() {
+	const c = document.createElement('canvas');
+	c.width = c.height = 64;
+	const g = c.getContext('2d');
+	if (!g) return new THREE.Texture();
+	const grd = g.createRadialGradient(32, 32, 1, 32, 32, 30);
+	grd.addColorStop(0, 'rgba(255,255,255,0.95)');
+	grd.addColorStop(0.35, 'rgba(255,255,255,0.35)');
+	grd.addColorStop(1, 'rgba(255,255,255,0)');
+	g.fillStyle = grd;
+	g.beginPath();
+	g.arc(32, 32, 30, 0, Math.PI * 2);
+	g.fill();
+	const tex = new THREE.CanvasTexture(c);
+	tex.needsUpdate = true;
+	return tex;
+}
+
+const LIGHT = { bg: 0xf3efe6, plaster: 0xf7f4ee, dust: 0x6b4a9e };
+const DARK = { bg: 0x12081c, plaster: 0x1c102c, dust: 0xd8b4fe };
+
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {() => boolean} isDark
+ */
+export function createWorld(canvas, isDark) {
+	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	const scene = new THREE.Scene();
-	scene.fog = new THREE.Fog(0xf3efe6, 12, 36);
-	const cam = new THREE.PerspectiveCamera(38, 1, 0.1, 80);
-	cam.position.set(0, 1.4, 10);
+	const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 80);
+	cam.position.set(0, 1.2, 9);
 
-	scene.add(new THREE.HemisphereLight(0xfffaf3, 0xc9b8a6, 1.1));
-	const key = new THREE.DirectionalLight(0xffffff, 1.4);
+	scene.add(new THREE.HemisphereLight(0xfffaf3, 0x3b2a55, 1));
+	const key = new THREE.DirectionalLight(0xffffff, 1.2);
 	key.position.set(4, 8, 6);
-	const fill = new THREE.DirectionalLight(0xb794f6, 0.35);
-	fill.position.set(-6, 2, 2);
-	scene.add(key, fill);
+	scene.add(key);
 
-	const plaster = new THREE.MeshStandardMaterial({ color: 0xf7f4ee, roughness: 0.88 });
-	const left = new THREE.Mesh(new THREE.BoxGeometry(3.2, 14, 8), plaster);
-	left.position.set(-8.2, 1, -2);
-	left.rotation.y = 0.35;
-	const right = left.clone();
-	right.position.set(8.2, 1, -2);
-	right.rotation.y = -0.35;
-	scene.add(left, right);
+	const plaster = new THREE.MeshStandardMaterial({ color: LIGHT.plaster, roughness: 0.9 });
+	const wall = (x, ry) => {
+		const m = new THREE.Mesh(new THREE.BoxGeometry(2.4, 16, 10), plaster);
+		m.position.set(x, 1, -3);
+		m.rotation.y = ry;
+		return m;
+	};
+	scene.add(wall(-7.6, 0.42), wall(7.6, -0.42));
 
-	const bits = new THREE.Group();
-	const mats = [0x2e1064, 0x7c3aed, 0xe9d5ff, 0xffffff].map(
-		(c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.4 })
-	);
-	for (let i = 0; i < 42; i++) {
-		const m = new THREE.Mesh(new THREE.PlaneGeometry(0.18 + Math.random() * 0.35, 0.12), mats[i % 4]);
-		const side = Math.random() < 0.5 ? -1 : 1;
-		m.position.set(side * (3.8 + Math.random() * 5), Math.random() * 8 - 1, (Math.random() - 0.5) * 8);
-		m.rotation.set(Math.random(), Math.random(), Math.random());
-		bits.add(m);
+	const COUNT = 520;
+	const pos = new Float32Array(COUNT * 3);
+	const vel = new Float32Array(COUNT * 3);
+	for (let i = 0; i < COUNT; i++) {
+		pos[i * 3] = (Math.random() - 0.5) * 14;
+		pos[i * 3 + 1] = Math.random() * 10 - 1;
+		pos[i * 3 + 2] = (Math.random() - 0.5) * 10;
+		vel[i * 3] = (Math.random() - 0.5) * 0.012;
+		vel[i * 3 + 1] = -0.004 - Math.random() * 0.01;
+		vel[i * 3 + 2] = (Math.random() - 0.5) * 0.008;
 	}
-	scene.add(bits);
+	const geo = new THREE.BufferGeometry();
+	geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+	const dustMat = new THREE.PointsMaterial({
+		map: dustTexture(),
+		color: LIGHT.dust,
+		size: 0.12,
+		transparent: true,
+		depthWrite: false,
+		opacity: 0.85,
+		sizeAttenuation: true,
+		blending: THREE.NormalBlending
+	});
+	scene.add(new THREE.Points(geo, dustMat));
+
+	const flakeGeo = new THREE.BoxGeometry(0.16, 0.22, 0.012);
+	const flakeMat = new THREE.MeshStandardMaterial({ color: 0xc4b5fd, roughness: 0.55, metalness: 0.05 });
+	const flakes = new THREE.InstancedMesh(flakeGeo, flakeMat, 70);
+	const dummy = new THREE.Object3D();
+	/** @type {{ x: number, y: number, z: number, rx: number, ry: number, rz: number, vy: number, spin: number }[]} */
+	const flakeState = [];
+	for (let i = 0; i < 70; i++) {
+		const s = {
+			x: (Math.random() - 0.5) * 12,
+			y: Math.random() * 9,
+			z: (Math.random() - 0.5) * 8,
+			rx: Math.random() * Math.PI,
+			ry: Math.random() * Math.PI,
+			rz: Math.random() * Math.PI,
+			vy: 0.006 + Math.random() * 0.01,
+			spin: 0.008 + Math.random() * 0.02
+		};
+		flakeState.push(s);
+	}
+	scene.add(flakes);
 
 	let mx = 0,
 		my = 0,
@@ -47,23 +101,58 @@ export function createWorld(canvas) {
 		mx = (e.clientX / innerWidth) * 2 - 1;
 		my = (e.clientY / innerHeight) * 2 - 1;
 	};
+
+	const applyTheme = () => {
+		const pal = isDark() ? DARK : LIGHT;
+		renderer.setClearColor(pal.bg, 1);
+		scene.fog = new THREE.Fog(pal.bg, 10, 32);
+		plaster.color.setHex(pal.plaster);
+		dustMat.color.setHex(pal.dust);
+		flakeMat.color.setHex(isDark() ? 0xa78bfa : 0x7c3aed);
+	};
+	applyTheme();
+
 	const resize = () => {
-		renderer.setSize(innerWidth, innerHeight, false);
-		cam.aspect = innerWidth / innerHeight;
+		const w = Math.max(1, canvas.clientWidth);
+		const h = Math.max(1, canvas.clientHeight);
+		renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+		renderer.setSize(w, h, false);
+		cam.aspect = w / h;
 		cam.updateProjectionMatrix();
 	};
+	const ro = new ResizeObserver(resize);
+	ro.observe(canvas);
 	addEventListener('pointermove', mouse);
-	addEventListener('resize', resize);
 	resize();
 
 	const tick = () => {
-		const t = performance.now() * 0.0004;
-		bits.children.forEach((c, i) => {
-			c.position.y += Math.sin(t + i) * 0.002;
-			c.rotation.z += 0.003;
+		applyTheme();
+		const attr = geo.getAttribute('position');
+		for (let i = 0; i < COUNT; i++) {
+			pos[i * 3] += vel[i * 3] + mx * 0.002;
+			pos[i * 3 + 1] += vel[i * 3 + 1];
+			pos[i * 3 + 2] += vel[i * 3 + 2];
+			if (pos[i * 3 + 1] < -2) pos[i * 3 + 1] = 9;
+			if (pos[i * 3] > 8) pos[i * 3] = -8;
+			if (pos[i * 3] < -8) pos[i * 3] = 8;
+		}
+		attr.needsUpdate = true;
+
+		flakeState.forEach((s, i) => {
+			s.y -= s.vy;
+			s.x += Math.sin(s.y + i) * 0.004;
+			s.rx += s.spin;
+			s.rz += s.spin * 0.6;
+			if (s.y < -2) s.y = 9;
+			dummy.position.set(s.x, s.y, s.z);
+			dummy.rotation.set(s.rx, s.ry, s.rz);
+			dummy.updateMatrix();
+			flakes.setMatrixAt(i, dummy.matrix);
 		});
-		cam.position.x = mx * 0.4;
-		cam.position.y = 1.4 + my * -0.15 + progress * 0.4;
+		flakes.instanceMatrix.needsUpdate = true;
+
+		cam.position.x = mx * 0.28;
+		cam.position.y = 1.2 + my * -0.1 + progress * 0.25;
 		cam.lookAt(0, 1, -2);
 		renderer.render(scene, cam);
 		raf = requestAnimationFrame(tick);
@@ -77,8 +166,9 @@ export function createWorld(canvas) {
 		},
 		destroy() {
 			cancelAnimationFrame(raf);
+			ro.disconnect();
 			removeEventListener('pointermove', mouse);
-			removeEventListener('resize', resize);
+			dustMat.map?.dispose();
 			renderer.dispose();
 		}
 	};
