@@ -1,13 +1,9 @@
 <script>
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
-
 	let { children } = $props();
 </script>
 
 <svelte:head>
-	<title>HMDP Admin</title>
-	<link rel="icon" href={favicon} />
+	<title>HMDP · Gastos e ingresos</title>
 </svelte:head>
-
 {@render children()}
