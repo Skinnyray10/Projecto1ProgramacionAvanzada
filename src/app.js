@@ -9,8 +9,12 @@ import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 const app = express();
 
-app.use(helmet());
-app.use(cors());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+app.use(cors({ origin: true, credentials: false }));
 app.use(express.json());
 
 app.get("/health", (_req, res) => {

@@ -7,7 +7,7 @@ export function notFound(_req, res) {
 
 export function errorHandler(err, _req, res, _next) {
   console.error(err);
-  const status = err.status || 500;
+  const status = err.status || (err.code ? 400 : 500);
   const message =
     status === 500 && env.nodeEnv === "production"
       ? "Error interno del servidor"

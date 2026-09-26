@@ -5,9 +5,19 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	server: {
+		host: true,
+		port: 5173,
 		proxy: {
-			'/api': 'http://localhost:3000',
-			'/health': 'http://localhost:3000'
+			'/api': {
+				target: 'http://127.0.0.1:3000',
+				changeOrigin: true,
+				secure: false
+			},
+			'/health': {
+				target: 'http://127.0.0.1:3000',
+				changeOrigin: true,
+				secure: false
+			}
 		}
 	},
 	plugins: [
