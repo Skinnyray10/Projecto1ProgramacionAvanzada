@@ -91,5 +91,6 @@
 
 <footer class="border-t-4 border-az-orange bg-az-black px-6 py-8 text-center text-sm text-zinc-300">
 	<p class="font-display text-lg uppercase tracking-wide text-white">Ryan Rolando Garcia Galvan</p>
-	<p class="mt-1 text-xs text-zinc-400">HMDP Refaccionaria · Sistema de piezas, autos y usuarios</p>
+	<p class="mt-1 font-display text-lg uppercase tracking-wide text-white">Jean Sebastian De La Rosa Escobedo</p>
+	<p class="mt-2 text-xs text-zinc-400">HMDP Refaccionaria · Sistema de piezas, autos y usuarios</p>
 </footer>

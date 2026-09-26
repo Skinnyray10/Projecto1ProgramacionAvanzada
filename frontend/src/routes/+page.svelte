@@ -87,7 +87,10 @@
 		<div>
 			<p class="font-display text-xl font-bold uppercase">Contacto</p>
 			<div class="mt-2 h-1 w-10 bg-az-orange"></div>
-			<p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">Ryan Rolando Garcia Galvan</p>
+			<p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+				Ryan Rolando Garcia Galvan<br />
+				Jean Sebastian De La Rosa Escobedo
+			</p>
 		</div>
 	</div>
 </section>
