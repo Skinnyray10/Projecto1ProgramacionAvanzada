@@ -2,7 +2,7 @@
   "name": "hmdp-admin-api",
   "version": "1.0.0",
   "private": true,
-  "description": "API REST de administración con Node.js, Supabase y BCRYPT",
+  "description": "API REST de refaccionaria: usuarios, piezas y autos",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
