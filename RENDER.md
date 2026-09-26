@@ -1,28 +1,32 @@
-# Deploy en Render (un solo Web Service)
+# Deploy en Render — un solo Web Service
 
-## Opción recomendada (Root Directory vacío)
+## Configuración (recomendada)
 
-- Root Directory: (vacío)
-- Build Command: `npm run build:render`
-- Start Command: `npm start`
+Deja **Root Directory vacío** (borra `frontend` si estaba).
 
-## Si Root Directory = `frontend`
-
-- Build Command: `npm install && npm run build && cd .. && npm install`
-- Start Command: `npm start`
-
-Eso ejecuta `prod-server.js`, que levanta API + frontend.
+| Campo | Valor |
+|---|---|
+| Root Directory | *(vacío)* |
+| Build Command | `npm run build:render` |
+| Start Command | `npm run start:render` |
 
 ## Variables de entorno
 
-Copia desde tu `.env` local:
+Copia de tu `.env` local (Environment en Render):
 
-- SUPABASE_URL
-- SUPABASE_SERVICE_ROLE_KEY
-- JWT_SECRET
-- JWT_EXPIRES_IN=8h
-- BCRYPT_SALT_ROUNDS=12
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN=8h`
+- `BCRYPT_SALT_ROUNDS=12`
 
-No uses PUBLIC_API_URL en el deploy unificado.
+No uses `PUBLIC_API_URL`.
 
-Tras cambiar settings: Manual Deploy → Clear build cache & deploy.
+## Después de guardar
+
+**Manual Deploy → Clear build cache & deploy**
+
+En los logs debe aparecer:
+`Sirviendo frontend SvelteKit + API REST`
+
+Prueba: `https://TU-SERVICIO.onrender.com/health`
