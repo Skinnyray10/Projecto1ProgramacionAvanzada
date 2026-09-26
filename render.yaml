@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: hmdp-api
+    name: hmdp-refaccionaria
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: npm install
+    buildCommand: npm run build:render
     startCommand: npm start
     healthCheckPath: /health
     envVars:
@@ -20,19 +20,3 @@ services:
         value: 8h
       - key: BCRYPT_SALT_ROUNDS
         value: 12
-
-  - type: web
-    name: hmdp-web
-    runtime: node
-    plan: free
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm start
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PUBLIC_API_URL
-        fromService:
-          name: hmdp-api
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
