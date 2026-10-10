@@ -10,6 +10,7 @@ import '../data/secure_store.dart';
 import '../models/app_user.dart';
 import '../models/car.dart';
 import '../models/part.dart';
+import '../services/location_service.dart';
 import '../services/sync_service.dart';
 
 class AppState extends ChangeNotifier with WidgetsBindingObserver {
@@ -19,6 +20,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         _store = store ?? SecureStore(),
         _connectivity = connectivity ?? Connectivity() {
     _sync = SyncService(api: _api, db: _db, store: _store);
+    _location = LocationService(api: _api, db: _db, store: _store);
   }
 
   final ApiClient _api;
@@ -26,9 +28,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final SecureStore _store;
   final Connectivity _connectivity;
   late final SyncService _sync;
+  late final LocationService _location;
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   Timer? _timer;
+  Timer? _locationTimer;
+  bool _foreground = true;
+  bool _capturingLocation = false;
+
+  LocationStatus locationStatus = LocationStatus.unknown;
 
   /// Contraseña en memoria tras un login offline, para pedir el JWT al reconectar.
   String? _deferredPassword;
@@ -59,12 +67,40 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       }
     });
     _timer = Timer.periodic(AppConfig.syncInterval, (_) => sync());
+    _locationTimer = Timer.periodic(AppConfig.locationInterval, (_) => shareLocation());
     unawaited(sync());
+    unawaited(shareLocation());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) sync();
+    _foreground = state == AppLifecycleState.resumed;
+    if (_foreground) {
+      sync();
+      shareLocation();
+    }
+  }
+
+  /// Solo en primer plano: Android no permite leer el GPS en segundo plano sin un permiso extra.
+  Future<void> shareLocation() async {
+    if (!isLoggedIn || !_foreground || _capturingLocation) return;
+    _capturingLocation = true;
+    try {
+      final status = await _location.capture();
+      if (status != locationStatus) {
+        if (status == LocationStatus.denied) {
+          notice = 'Permite el acceso a la ubicación para compartir tu posición con la tienda.';
+        } else if (status == LocationStatus.disabled) {
+          notice = 'Activa la ubicación (GPS) del teléfono para compartir tu posición.';
+        }
+        locationStatus = status;
+        notifyListeners();
+      }
+    } catch (_) {
+      // Sin señal GPS o tiempo agotado: se reintenta en el siguiente ciclo.
+    } finally {
+      _capturingLocation = false;
+    }
   }
 
   Future<void> sync() async {
@@ -74,6 +110,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     try {
       final report = await _sync.run(deferredPassword: _deferredPassword);
       if (report.reachedServer != null) online = report.reachedServer;
+      if (online == true) unawaited(_location.flush());
 
       session = await _store.readSession();
       if (session?.token != null) _deferredPassword = null;
@@ -165,6 +202,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     session = newSession;
     needsReauth = false;
     notifyListeners();
+    unawaited(shareLocation());
   }
 
   Future<void> _endSession() async {
@@ -179,6 +217,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _connectivitySub?.cancel();
     _timer?.cancel();
+    _locationTimer?.cancel();
     super.dispose();
   }
 }

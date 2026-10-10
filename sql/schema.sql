@@ -92,14 +92,26 @@ create trigger cars_set_updated_at
 before update on public.cars
 for each row execute function public.set_updated_at();
 
+create table if not exists public.user_locations (
+  user_id uuid primary key references public.users (id) on delete cascade,
+  latitude double precision not null check (latitude between -90 and 90),
+  longitude double precision not null check (longitude between -180 and 180),
+  accuracy double precision,
+  recorded_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.users enable row level security;
 alter table public.parts enable row level security;
 alter table public.cars enable row level security;
+alter table public.user_locations enable row level security;
 
 revoke all on public.users from anon, authenticated;
 revoke all on public.parts from anon, authenticated;
 revoke all on public.cars from anon, authenticated;
+revoke all on public.user_locations from anon, authenticated;
 
 grant all on public.users to service_role;
 grant all on public.parts to service_role;
 grant all on public.cars to service_role;
+grant all on public.user_locations to service_role;

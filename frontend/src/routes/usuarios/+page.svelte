@@ -76,9 +76,9 @@
 		<p class="mb-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
 	{/if}
 
-	{#if session.user}
+	{#if session.canManageUsers && session.token}
 		<div class="mb-6">
-			<UserLocationMap name={session.user.full_name} />
+			<UserLocationMap token={session.token} />
 		</div>
 	{/if}
 

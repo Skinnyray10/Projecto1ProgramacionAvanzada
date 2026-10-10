@@ -67,6 +67,9 @@ class ApiClient {
     return list.map(Car.fromApi).toList();
   }
 
+  Future<void> sendLocation(String token, Map<String, dynamic> location) =>
+      _send('PUT', '/api/locations/me', token: token, body: location);
+
   AuthResult _authResult(Map<String, dynamic> data) => AuthResult(
         data['token'] as String,
         AppUser.fromJson(data['user'] as Map<String, dynamic>),

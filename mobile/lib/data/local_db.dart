@@ -158,6 +158,11 @@ class LocalDb {
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> deleteMeta(String key) async {
+    final db = await _database;
+    await db.delete('meta', where: 'key = ?', whereArgs: [key]);
+  }
+
   Future<int> addPendingRegistration(String email, String fullName) async {
     final db = await _database;
     return db.insert(

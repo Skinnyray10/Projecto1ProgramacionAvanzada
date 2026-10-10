@@ -9,4 +9,6 @@ class AppConfig {
   static const requestTimeout = Duration(seconds: 60);
 
   static const syncInterval = Duration(minutes: 5);
+
+  static const locationInterval = Duration(minutes: 1);
 }

@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import partRoutes from "./routes/parts.js";
 import carRoutes from "./routes/cars.js";
+import locationRoutes from "./routes/locations.js";
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/parts", partRoutes);
 app.use("/api/cars", carRoutes);
+app.use("/api/locations", locationRoutes);
 
 export default app;

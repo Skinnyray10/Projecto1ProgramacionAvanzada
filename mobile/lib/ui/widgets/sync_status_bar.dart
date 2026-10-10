@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/location_service.dart';
 import '../../state/app_state.dart';
 import '../theme.dart';
 
@@ -22,6 +23,16 @@ class SyncStatusBar extends StatelessWidget {
             Expanded(
                 child: Text(text,
                     style: const TextStyle(color: Colors.white, fontSize: 13))),
+            Icon(
+              state.locationStatus == LocationStatus.active
+                  ? Icons.location_on
+                  : Icons.location_off,
+              size: 18,
+              color: Colors.white,
+              semanticLabel: state.locationStatus == LocationStatus.active
+                  ? 'Ubicación compartida'
+                  : 'Ubicación no compartida',
+            ),
             if (state.needsReauth)
               TextButton(
                 onPressed: state.logout,
