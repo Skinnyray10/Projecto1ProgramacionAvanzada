@@ -1,5 +1,6 @@
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ROLES = new Set(["super_admin", "admin", "operator"]);
+const ROLES = new Set(["super_admin", "admin", "operator", "customer"]);
+export const STAFF_ROLES = ["super_admin", "admin", "operator"];
 
 export function requireFields(body, fields) {
   return fields.filter((field) => {

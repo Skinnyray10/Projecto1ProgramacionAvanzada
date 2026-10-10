@@ -40,6 +40,31 @@ export async function bootstrap(req, res) {
   return success(res, { token, user }, 201);
 }
 
+export async function register(req, res) {
+  const missing = requireFields(req.body, ["email", "password", "fullName"]);
+  if (missing.length) {
+    return fail(res, `Faltan campos: ${missing.join(", ")}`, 400);
+  }
+
+  if (!isValidEmail(req.body.email)) {
+    return fail(res, "Correo inválido", 400);
+  }
+
+  if (!isStrongPassword(req.body.password)) {
+    return fail(res, "La contraseña debe tener al menos 8 caracteres", 400);
+  }
+
+  const user = await createUser({
+    email: req.body.email,
+    password: req.body.password,
+    fullName: req.body.fullName,
+    role: "customer",
+  });
+
+  const token = signToken(user);
+  return success(res, { token, user }, 201);
+}
+
 export async function login(req, res) {
   const missing = requireFields(req.body, ["email", "password"]);
   if (missing.length) {

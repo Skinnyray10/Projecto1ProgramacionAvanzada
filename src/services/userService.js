@@ -70,6 +70,13 @@ export async function createUser({ email, password, fullName, role = "operator" 
       conflict.status = 409;
       throw conflict;
     }
+    if (error.code === "22P02" && role === "customer") {
+      const missingRole = new Error(
+        "El rol 'customer' no existe en la base de datos. Ejecuta sql/002_customer_role.sql en Supabase",
+      );
+      missingRole.status = 503;
+      throw missingRole;
+    }
     throw error;
   }
 

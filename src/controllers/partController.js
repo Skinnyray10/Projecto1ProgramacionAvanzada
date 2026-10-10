@@ -8,14 +8,17 @@ import {
   updatePart,
 } from "../services/partService.js";
 
-export async function getParts(_req, res) {
+export async function getParts(req, res) {
   const parts = await listParts();
-  return success(res, { parts });
+  const visible = req.user.role === "customer" ? parts.filter((p) => p.is_active) : parts;
+  return success(res, { parts: visible });
 }
 
 export async function getPart(req, res) {
   const part = await findPartById(req.params.id);
-  if (!part) return fail(res, "Pieza no encontrada", 404);
+  if (!part || (req.user.role === "customer" && !part.is_active)) {
+    return fail(res, "Pieza no encontrada", 404);
+  }
   return success(res, { part });
 }
 
