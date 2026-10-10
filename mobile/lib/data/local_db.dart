@@ -1,6 +1,7 @@
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import '../models/car.dart';
 import '../models/part.dart';
 
 class PendingRegistration {
@@ -21,11 +22,29 @@ class PendingRegistration {
 class LocalDb {
   Database? _db;
 
+  static const _carsTable = '''
+    CREATE TABLE cars (
+      id TEXT PRIMARY KEY,
+      brand TEXT NOT NULL,
+      model TEXT NOT NULL,
+      year INTEGER NOT NULL,
+      color TEXT,
+      plates TEXT,
+      vin TEXT,
+      owner_name TEXT,
+      notes TEXT,
+      is_active INTEGER NOT NULL
+    )''';
+
   Future<Database> get _database async =>
       _db ??= await openDatabase(
         p.join(await getDatabasesPath(), 'hmdp.db'),
-        version: 1,
+        version: 2,
+        onUpgrade: (db, oldVersion, _) async {
+          if (oldVersion < 2) await db.execute(_carsTable);
+        },
         onCreate: (db, _) async {
+          await db.execute(_carsTable);
           await db.execute('''
             CREATE TABLE parts (
               id TEXT PRIMARY KEY,
@@ -63,6 +82,32 @@ class LocalDb {
       }
       await batch.commit(noResult: true);
     });
+  }
+
+  Future<void> replaceCars(List<Car> cars) async {
+    final db = await _database;
+    await db.transaction((txn) async {
+      await txn.delete('cars');
+      final batch = txn.batch();
+      for (final car in cars) {
+        batch.insert('cars', car.toDb());
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  Future<List<Car>> searchCars({String query = ''}) async {
+    final db = await _database;
+    final q = query.trim();
+    final rows = await db.query(
+      'cars',
+      where: q.isEmpty
+          ? 'is_active = 1'
+          : "is_active = 1 AND (brand LIKE ? OR model LIKE ? OR CAST(year AS TEXT) LIKE ? OR color LIKE ? OR plates LIKE ? OR owner_name LIKE ?)",
+      whereArgs: q.isEmpty ? null : List.filled(6, '%$q%'),
+      orderBy: 'brand COLLATE NOCASE, model COLLATE NOCASE, year DESC',
+    );
+    return rows.map(Car.fromDb).toList();
   }
 
   Future<List<Part>> searchParts({String query = '', String? category}) async {

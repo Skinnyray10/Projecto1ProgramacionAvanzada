@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hmdp_refaccionaria/models/car.dart';
 import 'package:hmdp_refaccionaria/models/part.dart';
 import 'package:hmdp_refaccionaria/ui/theme.dart';
 
@@ -37,6 +38,24 @@ void main() {
       expect(restored.isActive, isFalse);
       expect(restored.inStock, isFalse);
     });
+  });
+
+  test('Car de cliente llega sin datos sensibles y se guarda en SQLite', () {
+    final car = Car.fromApi({
+      'id': 'c1',
+      'brand': 'Nissan',
+      'model': 'Versa',
+      'year': 2020,
+      'color': 'Gris',
+      'is_active': true,
+    });
+
+    final restored = Car.fromDb(car.toDb());
+
+    expect(restored.title, 'Nissan Versa');
+    expect(restored.year, 2020);
+    expect(restored.plates, isNull);
+    expect(restored.ownerName, isNull);
   });
 
   test('formatPrice agrega separador de miles', () {

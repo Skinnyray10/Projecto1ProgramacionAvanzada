@@ -5,7 +5,7 @@ import '../data/secure_store.dart';
 class SyncReport {
   /// `true` si el servidor respondió, `false` si no hubo conexión, `null` si no se intentó.
   bool? reachedServer;
-  int? partsSynced;
+  bool catalogSynced = false;
   bool sessionExpired = false;
   bool pendingAccountRejected = false;
   bool needsLogin = false;
@@ -15,7 +15,7 @@ class SyncReport {
 /// Rutina de sincronización:
 /// 1. Envía al servidor las cuentas creadas sin conexión.
 /// 2. Obtiene un JWT si la sesión se abrió offline.
-/// 3. Descarga el catálogo de piezas y reemplaza la caché local.
+/// 3. Descarga piezas y autos y reemplaza la caché local.
 class SyncService {
   SyncService({required this.api, required this.db, required this.store});
 
@@ -43,11 +43,14 @@ class SyncService {
         await store.writeSession(session);
       }
 
-      final parts = await api.fetchParts(session.token!);
+      final token = session.token!;
+      final parts = await api.fetchParts(token);
       report.reachedServer = true;
+      final cars = await api.fetchCars(token);
       await db.replaceParts(parts);
+      await db.replaceCars(cars);
       await db.setMeta('last_sync', DateTime.now().toIso8601String());
-      report.partsSynced = parts.length;
+      report.catalogSynced = true;
     } on ApiException catch (e) {
       if (e.isNetwork) {
         report.reachedServer = false;

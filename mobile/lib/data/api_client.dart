@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../config.dart';
 import '../models/app_user.dart';
+import '../models/car.dart';
 import '../models/part.dart';
 
 class ApiException implements Exception {
@@ -58,6 +59,12 @@ class ApiClient {
     final data = await _send('GET', '/api/parts', token: token);
     final list = (data['parts'] as List).cast<Map<String, dynamic>>();
     return list.map(Part.fromApi).toList();
+  }
+
+  Future<List<Car>> fetchCars(String token) async {
+    final data = await _send('GET', '/api/cars', token: token);
+    final list = (data['cars'] as List).cast<Map<String, dynamic>>();
+    return list.map(Car.fromApi).toList();
   }
 
   AuthResult _authResult(Map<String, dynamic> data) => AuthResult(

@@ -8,6 +8,7 @@ import '../data/api_client.dart';
 import '../data/local_db.dart';
 import '../data/secure_store.dart';
 import '../models/app_user.dart';
+import '../models/car.dart';
 import '../models/part.dart';
 import '../services/sync_service.dart';
 
@@ -78,7 +79,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       if (session?.token != null) _deferredPassword = null;
       needsReauth = report.needsLogin && session != null;
 
-      if (report.partsSynced != null) {
+      if (report.catalogSynced) {
         lastSync = DateTime.now();
         catalogVersion++;
       }
@@ -156,6 +157,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _db.searchParts(query: query, category: category);
 
   Future<List<String>> categories() => _db.categories();
+
+  Future<List<Car>> searchCars({String query = ''}) => _db.searchCars(query: query);
 
   Future<void> _startSession(StoredSession newSession) async {
     await _store.writeSession(newSession);

@@ -8,15 +8,21 @@ import {
   updateCar,
 } from "../services/carService.js";
 
-export async function getCars(_req, res) {
+function toCustomerCar({ id, brand, model, year, color, is_active, updated_at }) {
+  return { id, brand, model, year, color, is_active, updated_at };
+}
+
+export async function getCars(req, res) {
   const cars = await listCars();
-  return success(res, { cars });
+  if (req.user.role !== "customer") return success(res, { cars });
+  return success(res, { cars: cars.filter((c) => c.is_active).map(toCustomerCar) });
 }
 
 export async function getCar(req, res) {
   const car = await findCarById(req.params.id);
-  if (!car) return fail(res, "Auto no encontrado", 404);
-  return success(res, { car });
+  const isCustomer = req.user.role === "customer";
+  if (!car || (isCustomer && !car.is_active)) return fail(res, "Auto no encontrado", 404);
+  return success(res, { car: isCustomer ? toCustomerCar(car) : car });
 }
 
 export async function postCar(req, res) {

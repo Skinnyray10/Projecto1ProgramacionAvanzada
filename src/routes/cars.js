@@ -12,12 +12,12 @@ import { STAFF_ROLES } from "../utils/validate.js";
 
 const router = Router();
 
-router.use(requireAuth, requireRoles(...STAFF_ROLES));
+router.use(requireAuth);
 
 router.get("/", asyncHandler(getCars));
 router.get("/:id", asyncHandler(getCar));
-router.post("/", asyncHandler(postCar));
-router.patch("/:id", asyncHandler(patchCar));
+router.post("/", requireRoles(...STAFF_ROLES), asyncHandler(postCar));
+router.patch("/:id", requireRoles(...STAFF_ROLES), asyncHandler(patchCar));
 router.delete("/:id", requireRoles("super_admin", "admin"), asyncHandler(removeCar));
 
 export default router;

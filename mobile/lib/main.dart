@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'state/app_state.dart';
+import 'ui/screens/home_screen.dart';
 import 'ui/screens/login_screen.dart';
-import 'ui/screens/products_screen.dart';
 import 'ui/theme.dart';
 
 Future<void> main() async {
@@ -27,7 +27,7 @@ class HmdpApp extends StatelessWidget {
       home: ListenableBuilder(
         listenable: state,
         builder: (context, _) => state.isLoggedIn
-            ? ProductsScreen(key: ValueKey(state.session!.user.email), state: state)
+            ? HomeScreen(key: ValueKey(state.session!.user.email), state: state)
             : LoginScreen(state: state),
       ),
     );
