@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api.js';
 	import { session } from '$lib/session.svelte.js';
+	import UserLocationMap from '$lib/components/UserLocationMap.svelte';
 
 	/** @type {any[]} */
 	let users = $state([]);
@@ -73,6 +74,12 @@
 <main class="mx-auto max-w-5xl px-4 py-8">
 	{#if error}
 		<p class="mb-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+	{/if}
+
+	{#if session.user}
+		<div class="mb-6">
+			<UserLocationMap name={session.user.full_name} />
+		</div>
 	{/if}
 
 	{#if session.canManageUsers}
